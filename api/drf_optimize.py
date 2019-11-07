@@ -1,6 +1,7 @@
 from django.db import ProgrammingError, models
 from django.db.models.constants import LOOKUP_SEP
 from django.db.models.query import normalize_prefetch_lookups
+from django.db.utils import OperationalError
 from rest_framework import serializers
 from rest_framework.utils import model_meta
 
@@ -107,6 +108,6 @@ class OptimizeRelatedModelViewSetMetaclass(type):
                 if related_fields:
                     queryset = queryset.select_related(*related_fields)
                 attrs['queryset'] = queryset.all()
-        except ProgrammingError:
+        except (ProgrammingError, OperationalError):
             pass
         return super(OptimizeRelatedModelViewSetMetaclass, cls).__new__(cls, name, bases, attrs)
