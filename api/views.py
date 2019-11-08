@@ -1894,7 +1894,7 @@ import time
 
 class MediaAccessView(APIView):
     permission_classes = (AllowAny, )
-    
+
     # @silk_profile(name='media')
     def get(self, request, path, fname, format=None):
         if False: # allow all images to be viewable by everyone
@@ -1958,7 +1958,7 @@ class MediaAccessView(APIView):
 
 class MediaAccessFullsizeOriginalView(APIView):
     permission_classes = (AllowAny, )
-    
+
     # @silk_profile(name='media')
     def get(self, request, path, fname, format=None):
         if False: # allow all images to be viewable by everyone
