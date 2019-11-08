@@ -87,21 +87,21 @@ def get_default_longrunningjob_result():
 
 
 class User(AbstractUser):
-    scan_directory = models.CharField(max_length=512, db_index=True)
-    avatar = models.ImageField(upload_to='avatars', null=True)
+    scan_directory = models.CharField(max_length=512, db_index=True, blank=True)
+    avatar = models.ImageField(upload_to='avatars', null=True, blank=True)
 
     nextcloud_server_address = models.CharField(
-        max_length=200, default=None, null=True)
+        max_length=200, default=None, null=True, blank=True)
     nextcloud_username = models.CharField(
-        max_length=64, default=None, null=True)
+        max_length=64, default=None, null=True, blank=True)
     nextcloud_app_password = encrypt(
-        models.CharField(max_length=64, default=None, null=True))
+        models.CharField(max_length=64, default=None, null=True, blank=True))
     nextcloud_scan_directory = models.CharField(
-        max_length=512, db_index=True, null=True)
+        max_length=512, db_index=True, null=True, blank=True)
 
 
 class Photo(models.Model):
-    image_path = models.CharField(max_length=512, db_index=True)
+    image_path = models.CharField(max_length=512, db_index=True, unique=True)
     # md5_{user.id}
     image_hash = models.CharField(primary_key=True, max_length=64, null=False)
 

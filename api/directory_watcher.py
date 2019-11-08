@@ -71,7 +71,7 @@ def handle_new_image(user, image_path, job_id):
 
             photo_exists = Photo.objects.filter(
                 Q(image_hash=image_hash)
-                & Q(image_path=image_path)).exists()
+                | Q(image_path=image_path)).exists()
 
             if not photo_exists:
                 photo = Photo.objects.create(
@@ -187,10 +187,11 @@ def scan_photos(user):
     try:
         image_paths = []
 
-        image_paths.extend([
-            os.path.join(dp, f) for dp, dn, fn in os.walk(user.scan_directory)
-            for f in fn
-        ])
+        for dp, dn, fn in os.walk(user.scan_directory):
+            dn[:] = [d for d in dn if not d.startswith('.')]
+            fn[:] = [f for f in fn if not f.startswith('.')]
+            for f in fn:
+                image_paths.append(os.path.join(dp, f))
 
         image_paths = [
             p for p in image_paths
