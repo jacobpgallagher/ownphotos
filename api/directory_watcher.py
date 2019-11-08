@@ -23,6 +23,7 @@ import rq
 
 
 from django.db.models import Q
+from django.db.utils import IntegrityError
 import json
 
 import logging
@@ -173,13 +174,19 @@ def scan_photos(user):
         lrj.started_at = datetime.datetime.now().replace(tzinfo=pytz.utc)
         lrj.save()
     else:
-        lrj = LongRunningJob.objects.create(
-            started_by=user,
-            job_id=job_id,
-            queued_at=datetime.datetime.now().replace(tzinfo=pytz.utc),
-            started_at=datetime.datetime.now().replace(tzinfo=pytz.utc),
-            job_type=LongRunningJob.JOB_SCAN_PHOTOS)
-        lrj.save()
+        try:
+            lrj = LongRunningJob.objects.create(
+                started_by=user,
+                job_id=job_id,
+                queued_at=datetime.datetime.now().replace(tzinfo=pytz.utc),
+                started_at=datetime.datetime.now().replace(tzinfo=pytz.utc),
+                job_type=LongRunningJob.JOB_SCAN_PHOTOS)
+            lrj.save()
+        except IntegrityError:
+            lrj = LongRunningJob.objects.get(job_id=job_id)
+            lrj.started_at = datetime.datetime.now().replace(tzinfo=pytz.utc)
+            lrj.save()
+
 
     return scan_photos_helper(user, lrj)
 
