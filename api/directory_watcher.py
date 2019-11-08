@@ -178,7 +178,13 @@ def scan_photos(user):
             job_type=LongRunningJob.JOB_SCAN_PHOTOS)
         lrj.save()
 
+    return scan_photos_helper(user, lrj)
 
+def scan_photos_helper(user, lrj=None):
+    if lrj:
+        job_id=lrj.id
+    else:
+        job_id=None
 
 
     added_photo_count = 0
@@ -210,13 +216,14 @@ def scan_photos(user):
         to_add_count = len(image_paths_to_add)
         for idx, image_path in enumerate(image_paths_to_add):
             handle_new_image(user, image_path, job_id)
-            lrj.result = {
-                'progress': {
-                    "current": idx + 1,
-                    "target": to_add_count
+            if lrj is not None:
+                lrj.result = {
+                    'progress': {
+                        "current": idx + 1,
+                        "target": to_add_count
+                    }
                 }
-            }
-            lrj.save()
+                lrj.save()
         '''
         image_paths_to_add = Parallel(n_jobs=multiprocessing.cpu_count(), backend="multiprocessing")(delayed(is_new_image)(existing_hashes, image_path) for image_path in tqdm(image_paths))
         image_paths_to_add = filter(None, image_paths_to_add)
@@ -226,23 +233,26 @@ def scan_photos(user):
         util.logger.info("Added {} photos".format(len(image_paths_to_add)))
         build_image_similarity_index(user)
 
-        lrj = LongRunningJob.objects.get(job_id=rq.get_current_job().id)
-        lrj.finished = True
-        lrj.finished_at = datetime.datetime.now().replace(tzinfo=pytz.utc)
-        prev_result = lrj.result
-        next_result = prev_result
-        next_result['new_photo_count'] = added_photo_count
-        lrj.result = next_result
-        lrj.save()
+        if lrj is not None:
+            lrj = LongRunningJob.objects.get(job_id=rq.get_current_job().id)
+            lrj.finished = True
+            lrj.finished_at = datetime.datetime.now().replace(tzinfo=pytz.utc)
+            prev_result = lrj.result
+            next_result = prev_result
+            next_result['new_photo_count'] = added_photo_count
+            lrj.result = next_result
+            lrj.save()
     except Exception as e:
-        util.logger.exception(str(e))
-        lrj = LongRunningJob.objects.get(job_id=rq.get_current_job().id)
-        lrj.finished = True
-        lrj.failed = True
-        lrj.finished_at = datetime.datetime.now().replace(tzinfo=pytz.utc)
-        prev_result = lrj.result
-        next_result = prev_result
-        next_result['new_photo_count'] = 0
-        lrj.result = next_result
-        lrj.save()
+        if lrj is not None:
+            util.logger.exception(str(e))
+            lrj = LongRunningJob.objects.get(job_id=rq.get_current_job().id)
+            lrj.finished = True
+            lrj.failed = True
+            lrj.finished_at = datetime.datetime.now().replace(tzinfo=pytz.utc)
+            prev_result = lrj.result
+            next_result = prev_result
+            next_result['new_photo_count'] = 0
+            lrj.result = next_result
+            lrj.save()
+        raise
     return {"new_photo_count": added_photo_count, "status": True}
