@@ -1,8 +1,10 @@
 from api.models import Photo, User
-from api.util import logger
 import requests
 import numpy as np
 from ownphotos.settings import IMAGE_SIMILARITY_SERVER
+
+import logging
+logger = logging.getLogger(__name__)
 
 def search_similar_image(user,photo):
     if type(user) == int:
@@ -43,4 +45,3 @@ def build_image_similarity_index(user):
     }
     res = requests.post(IMAGE_SIMILARITY_SERVER+'/build/',json=post_data)
     return res.json()
-

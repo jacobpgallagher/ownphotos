@@ -1,7 +1,6 @@
 from api.models import Face
 from api.models import Person
 from api.models import LongRunningJob
-from api.util import logger
 
 import base64
 import pickle
@@ -26,6 +25,9 @@ import rq
 import pytz
 
 import datetime
+
+import logging
+logger = logging.getLogger(__name__)
 
 
 def cluster_faces(user):

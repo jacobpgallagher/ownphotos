@@ -303,3 +303,47 @@ IMAGE_SIMILARITY_SERVER = 'http://localhost:8002'
 
 # SILKY_PYTHON_PROFILER = True
 # SILKY_PYTHON_PROFILER_BINARY = True
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'standard': {
+            'format': '{asctime} : {name}.{module} : {funcName} : {lineno} : {levelname} : {message}',
+            'style': '{',
+        }
+    },
+    'filters': {
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'standard',
+            'filters': ['require_debug_true'],
+        },
+        'file': {
+            'class' : 'logging.handlers.RotatingFileHandler',
+            'filename' : os.path.join(os.getenv('LOG_DIR', './logs'), 'ownphotos.log'),
+            'maxBytes' : 1024*1024*100, # 100MB
+            'backupCount' : 10,
+            'formatter' : 'standard',
+        }
+    },
+    'loggers': {
+        'rq': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+        },
+        'django_rq': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+        },
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
+        },
+    },
+}

@@ -7,9 +7,11 @@ from api.models import *
 import owncloud as nextcloud
 from api.api_util import get_current_job
 from nextcloud.directory_watcher import scan_photos
-from api.util import logger
+import logging
 
 import datetime
+
+logger = logging.getLogger(__name__)
 
 class ListDir(APIView):
     def get(self, request, format=None):
@@ -49,4 +51,3 @@ class ScanPhotosView(APIView):
         except BaseException as e:
             logger.error(str(e))
             return Response({'status': False})
-

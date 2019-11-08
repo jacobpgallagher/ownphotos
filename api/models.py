@@ -9,7 +9,6 @@ import face_recognition
 import hashlib
 import ownphotos.settings
 import api.util as util
-from api.util import logger
 import exifread
 import base64
 import numpy as np
@@ -40,6 +39,9 @@ from io import StringIO
 import ipdb
 from django_cryptography.fields import encrypt
 from api.im2vec import Im2Vec
+
+import logging
+logger = logging.getLogger(__name__)
 
 geolocator = Nominatim()
 default_tz = pytz.timezone('Asia/Seoul')
@@ -165,12 +167,12 @@ class Photo(models.Model):
             # todo: handle duplicate captions
             self.search_captions = search_captions + caption
             self.save()
-            util.logger.info(
+            logger.info(
                 'generated im2txt captions for image %s. caption: %s' %
                 (image_path, caption))
             return True
         except:
-            util.logger.warning(
+            logger.warning(
                 'could not generate im2txt captions for image %s' % image_path)
             return False
 
@@ -188,11 +190,11 @@ class Photo(models.Model):
                 self.captions_json = captions
                 self.search_captions = caption
                 self.save()
-                util.logger.info(
+                logger.info(
                     'generated im2txt captions for image %s. caption: %s' %
                     (image_path, caption))
             except:
-                util.logger.warning(
+                logger.warning(
                     'could not generate im2txt captions for image %s' %
                     image_path)
 
@@ -209,7 +211,7 @@ class Photo(models.Model):
                     resp_captions.json()['data'][:10])
                 self.save()
             except:
-                util.logger.warning(
+                logger.warning(
                     'could not generate densecap captions for image %s' %
                     image_path)
 
@@ -227,10 +229,10 @@ class Photo(models.Model):
                     [res_places365['environment']])
 
             self.save()
-            util.logger.info(
+            logger.info(
                 'generated places365 captions for image %s.' % (image_path))
         except:
-            util.logger.warning(
+            logger.warning(
                 'could not generate places365 captions for image %s' %
                 image_path)
 
@@ -423,12 +425,12 @@ class Photo(models.Model):
                 self.exif_timestamp = dateparser.parse(
                     basename_without_extension, ignoretz=True,
                     fuzzy=True).replace(tzinfo=pytz.utc)
-                util.logger.info(
+                logger.info(
                     'determined date from filname for image {} - {}'.format(
                         self.image_path,
                         self.exif_timestamp.strftime(date_format)))
             except BaseException:
-                util.logger.warning(
+                logger.warning(
                     "Failed to determine date from filename for image %s" %
                     self.image_path)
 
@@ -462,7 +464,7 @@ class Photo(models.Model):
                         self.search_location = res['search_text']
                 self.save()
             except:
-                util.logger.warning('something went wrong with geolocating')
+                logger.warning('something went wrong with geolocating')
                 pass
                 # self.geolocation_json = {}
     def _im2vec(self):

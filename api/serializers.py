@@ -3,7 +3,6 @@ from rest_framework import serializers
 import ipdb
 import json
 import time
-from api.util import logger
 from datetime import datetime
 from django.contrib.auth import get_user_model
 from django.db.models import Count
@@ -11,6 +10,9 @@ from django.db.models import Q
 from django.db.models import Prefetch
 import os
 from api.image_similarity import search_similar_image
+
+import logging
+logger = logging.getLogger(__name__)
 
 
 class SimpleUserSerializer(serializers.ModelSerializer):

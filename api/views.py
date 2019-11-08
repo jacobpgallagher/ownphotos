@@ -114,7 +114,8 @@ from django_rq import job
 import django_rq
 from django_bulk_update.helper import bulk_update
 
-from api.util import logger
+import logging
+logger = logging.getLogger(__name__)
 
 # from silk.profiling.profiler import silk_profile
 

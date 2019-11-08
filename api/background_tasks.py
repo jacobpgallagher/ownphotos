@@ -1,6 +1,8 @@
 from api.models import Photo, AlbumAuto
-from api.util import logger
 from tqdm import tqdm
+
+import logging
+logger = logging.getLogger(__name__)
 
 def generate_captions(overwrite=False):
     if overwrite:
@@ -16,7 +18,7 @@ def generate_captions(overwrite=False):
 def geolocate(overwrite=False):
     if overwrite:
         photos = Photo.objects.all()
-    else:   
+    else:
         photos = Photo.objects.filter(geolocation_json={})
     logger.info('%d photos to be geolocated'%photos.count())
     for photo in photos:

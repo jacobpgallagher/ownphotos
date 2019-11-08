@@ -24,17 +24,7 @@ from ownphotos.settings import IMAGE_SIMILARITY_SERVER
 
 nlp = spacy.load('en_core_web_sm')
 
-logger = logging.getLogger('ownphotos')
-fomatter = logging.Formatter(
-    '%(asctime)s : %(filename)s : %(funcName)s : %(lineno)s : %(levelname)s : %(message)s')
-fileMaxByte = 256 * 1024 * 200  # 100MB
-fileHandler = logging.handlers.RotatingFileHandler(
-    './logs/ownphotos.log', maxBytes=fileMaxByte, backupCount=10)
-fileHandler.setFormatter(fomatter)
-logger.addHandler(fileHandler)
-logger.setLevel(logging.INFO)
-
-
+logger = logging.getLogger(__name__)
 
 def convert_to_degrees(values):
     """
@@ -78,7 +68,7 @@ def compute_bic(kmeans,X):
     N, d = X.shape
 
     #compute variance for all clusters beforehand
-    cl_var = (1.0 / (N - m) / d) * sum([sum(distance.cdist(X[np.where(labels == i)], [centers[0][i]], 
+    cl_var = (1.0 / (N - m) / d) * sum([sum(distance.cdist(X[np.where(labels == i)], [centers[0][i]],
              'euclidean')**2) for i in range(m)])
 
     const_term = 0.5 * m * np.log(N) * (d+1)

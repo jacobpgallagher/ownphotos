@@ -16,8 +16,10 @@ from django_rq import job
 
 from tqdm import tqdm
 import rq
-from api.util import logger
 import pytz
+
+import logging
+logger = logging.getLogger(__name__)
 
 @job
 def regenerate_event_titles(user):
@@ -121,7 +123,7 @@ def generate_event_albums(user):
         logger.info('job {}: made groups'.format(job_id))
 
         album_locations = []
-        
+
         target_count = len(groups)
 
         date_format = "%Y:%m:%d %H:%M:%S"

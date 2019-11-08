@@ -29,7 +29,8 @@ from tqdm import tqdm
 
 import seaborn as sns
 import pandas as pd
-from api.util import logger
+import logging
+logger = logging.getLogger(__name__)
 
 def get_current_job():
     job_detail = None
@@ -380,7 +381,7 @@ def get_photo_month_counts(user):
         c['month'] for c in counts
         if c['month'].year >= 2000 and c['month'].year <= datetime.now().year
     ]
-    
+
     if len(all_months) > 0:
 
         first_month = min(all_months)
