@@ -154,10 +154,10 @@ def handle_new_image(user, image_path, job_id):
 
         except Exception as e:
             try:
-                util.logger.error("job {}: could not load image {}. reason: {}".format(
+                util.logger.exception("job {}: could not load image {}. reason: {}".format(
                     job_id,image_path, str(e)))
             except:
-                util.logger.error("job {}: could not load image {}".format(job_id,image_path))
+                util.logger.exception("job {}: could not load image {}".format(job_id,image_path))
     return
 
 
@@ -235,7 +235,7 @@ def scan_photos(user):
         lrj.result = next_result
         lrj.save()
     except Exception as e:
-        util.logger.error(str(e))
+        util.logger.exception(str(e))
         lrj = LongRunningJob.objects.get(job_id=rq.get_current_job().id)
         lrj.finished = True
         lrj.failed = True
