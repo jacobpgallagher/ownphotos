@@ -5,7 +5,6 @@ from PIL import ImageOps
 from PIL.ExifTags import TAGS as EXIFTAGS
 from django.db import models
 from django.db.models import Prefetch
-import face_recognition
 import hashlib
 import ownphotos.settings
 import api.util as util
@@ -29,7 +28,6 @@ from django.db.models.signals import post_save, post_delete
 from django.core.cache import cache
 from django.contrib.postgres.fields import JSONField
 
-from api.places365.places365 import inference_places365
 from api.im2txt.sample import im2txt
 
 import requests
@@ -38,14 +36,11 @@ from io import StringIO
 
 import ipdb
 from django_cryptography.fields import encrypt
-from api.im2vec import Im2Vec
 
 import logging
 logger = logging.getLogger(__name__)
 
 geolocator = Nominatim()
-default_tz = pytz.timezone('Asia/Seoul')
-im2vec = Im2Vec(cuda=False)
 
 
 def change_api_updated_at(sender=None, instance=None, *args, **kwargs):
@@ -216,6 +211,8 @@ class Photo(models.Model):
                     image_path)
 
         # places365
+        # Importing here to save memory/startup time
+        from api.places365.places365 import inference_places365
         try:
             res_places365 = inference_places365(image_path)
             captions['places365'] = res_places365
@@ -468,6 +465,10 @@ class Photo(models.Model):
                 pass
                 # self.geolocation_json = {}
     def _im2vec(self):
+        # Importing here to save memory/startup time
+        from api.im2vec import Im2Vec
+        im2vec = Im2Vec(cuda=False)
+
         try:
             image = PIL.Image.open(self.square_thumbnail_big)
             vec = im2vec.get_vec(image)
@@ -477,6 +478,9 @@ class Photo(models.Model):
             pass
 
     def _extract_faces(self):
+        # Importing here to save memory/startup time
+        import face_recognition
+
         qs_unknown_person = Person.objects.filter(name='unknown')
         if qs_unknown_person.count() == 0:
             unknown_person = Person(name='unknown')
