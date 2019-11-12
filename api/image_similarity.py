@@ -7,6 +7,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 def search_similar_image(user,photo):
+    # Skip photos that haven't been processed
+    if not photo.encoding:
+        return
+
     if type(user) == int:
         user_id = user
     else:
@@ -23,7 +27,7 @@ def search_similar_image(user,photo):
         return res.json()
     else:
         logger.error('error retrieving similar photos to {} belonging to user {}'.format(photo.image_hash,user.username))
-        return []
+        return
 
 def build_image_similarity_index(user):
     logger.info('builing similarity index for user {}'.format(user.username))

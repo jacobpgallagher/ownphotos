@@ -70,8 +70,8 @@ def handle_new_image(user, image_path, job_id):
             image_hash = hash_md5.hexdigest() + str(user.id)
             elapsed = (datetime.datetime.now() - start).total_seconds()
             elapsed_times['md5'] = elapsed
-#             logger.info('generating md5 took %.2f, image_hash: %s' %
-#                              (elapsed, image_hash))
+            logger.debug('generating md5 took %.2f, image_hash: %s' %
+                        (elapsed, image_hash))
 
             photo_exists = Photo.objects.filter(
                 Q(image_hash=image_hash)
@@ -90,64 +90,64 @@ def handle_new_image(user, image_path, job_id):
                 photo._generate_thumbnail()
                 elapsed = (datetime.datetime.now() - start).total_seconds()
                 elapsed_times['thumbnails'] = elapsed
-#                 logger.info('thumbnail get took %.2f' % elapsed)
+                logger.debug('thumbnail get took %.2f' % elapsed)
 
-                start = datetime.datetime.now()
-                photo._generate_captions()
-                elapsed = (datetime.datetime.now() - start).total_seconds()
-                elapsed_times['captions'] = elapsed
-#                 logger.info('caption generation took %.2f' % elapsed)
+                # start = datetime.datetime.now()
+                # photo._generate_captions()
+                # elapsed = (datetime.datetime.now() - start).total_seconds()
+                # elapsed_times['captions'] = elapsed
+                # logger.debug('caption generation took %.2f' % elapsed)
 
 #                 start = datetime.datetime.now()
 #                 photo._save_image_to_db()
 #                 elapsed = (datetime.datetime.now() - start).total_seconds()
 #                 elapsed_times['image_save'] = elapsed
-#                 logger.info('image save took %.2f' % elapsed)
+#                 logger.debug('image save took %.2f' % elapsed)
 
                 start = datetime.datetime.now()
                 photo._extract_exif()
                 photo.save()
                 elapsed = (datetime.datetime.now() - start).total_seconds()
                 elapsed_times['exif'] = elapsed
-#                 logger.info('exif extraction took %.2f' % elapsed)
+                logger.debug('exif extraction took %.2f' % elapsed)
 
                 start = datetime.datetime.now()
                 photo._geolocate_mapbox()
                 photo.save()
                 elapsed = (datetime.datetime.now() - start).total_seconds()
                 elapsed_times['geolocation'] = elapsed
-#                 logger.info('geolocation took %.2f' % elapsed)
+                logger.debug('geolocation took %.2f' % elapsed)
 
                 start = datetime.datetime.now()
                 photo._add_to_album_place()
                 photo.save()
                 elapsed = (datetime.datetime.now() - start).total_seconds()
                 elapsed_times['album_place'] = elapsed
-#                 logger.info('add to AlbumPlace took %.2f' % elapsed)
+                logger.debug('add to AlbumPlace took %.2f' % elapsed)
 
                 start = datetime.datetime.now()
                 photo._extract_faces()
                 elapsed = (datetime.datetime.now() - start).total_seconds()
                 elapsed_times['faces'] = elapsed
-#                 logger.info('face extraction took %.2f' % elapsed)
+                logger.debug('face extraction took %.2f' % elapsed)
 
                 start = datetime.datetime.now()
                 photo._add_to_album_date()
                 elapsed = (datetime.datetime.now() - start).total_seconds()
                 elapsed_times['album_date'] = elapsed
-#                 logger.info('adding to AlbumDate took %.2f' % elapsed)
+                logger.debug('adding to AlbumDate took %.2f' % elapsed)
 
                 start = datetime.datetime.now()
                 photo._add_to_album_thing()
                 elapsed = (datetime.datetime.now() - start).total_seconds()
                 elapsed_times['album_thing'] = elapsed
-#                 logger.info('adding to AlbumThing took %.2f' % elapsed)
+                logger.debug('adding to AlbumThing took %.2f' % elapsed)
 
-                start = datetime.datetime.now()
-                photo._im2vec()
-                elapsed = (datetime.datetime.now() - start).total_seconds()
-                elapsed_times['im2vec'] = elapsed
-#                 logger.info('im2vec took %.2f' % elapsed)
+                # start = datetime.datetime.now()
+                # photo._im2vec()
+                # elapsed = (datetime.datetime.now() - start).total_seconds()
+                # elapsed_times['im2vec'] = elapsed
+                # logger.debug('im2vec took %.2f' % elapsed)
 
                 logger.info("job {}: image processed: {}, elapsed: {}".format(job_id,img_abs_path,json.dumps(elapsed_times)))
 
