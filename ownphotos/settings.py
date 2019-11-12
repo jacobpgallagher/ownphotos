@@ -27,7 +27,7 @@ RQ_API_TOKEN = os.environ['SECRET_KEY']
 DEBUG = (os.environ.get('DEBUG', '').lower() == 'true')
 
 ALLOWED_HOSTS = [
-    '192.168.1.100', 'localhost', 'ownphotos-api.local','backend',
+    os.environ.get('BACKEND_IP', '192.168.1.100'), 'localhost', 'ownphotos-api.local','backend',
     os.environ.get('BACKEND_HOST'), 'ownphotos.local'
 ]
 
@@ -333,13 +333,13 @@ LOGGING = {
         }
     },
     'loggers': {
-        'rq': {
+        'api': {
             'handlers': ['console', 'file'],
-            'level': 'DEBUG',
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
         },
-        'django_rq': {
+        'nextcloud': {
             'handlers': ['console', 'file'],
-            'level': 'DEBUG',
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
         },
         'django': {
             'handlers': ['console', 'file'],
