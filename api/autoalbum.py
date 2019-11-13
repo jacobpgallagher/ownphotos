@@ -3,6 +3,8 @@ from api.models import Person
 from api.models import AlbumAuto
 from api.models import LongRunningJob
 
+from django.db.models import Q
+
 from datetime import datetime, timedelta
 from itertools import groupby
 
@@ -42,7 +44,7 @@ def regenerate_event_titles(user):
 
     try:
 
-        aus = AlbumAuto.objects.filter(owner=user).prefetch_related('photos')
+        aus = AlbumAuto.objects.filter(Q(owner=user) | Q(owner__collaborators=user)).prefetch_related('photos')
         target_count = len(aus)
         for idx,au in enumerate(aus):
             logger.info('job {}: {}'.format(job_id,idx))
@@ -94,7 +96,7 @@ def generate_event_albums(user):
 
 
     try:
-        photos = Photo.objects.filter(owner=user).only('exif_timestamp')
+        photos = Photo.objects.filter(Q(owner=user) | Q(owner__collaborators=user)).only('exif_timestamp')
 
         photos_with_timestamp = [(photo.exif_timestamp, photo)
                                  for photo in photos if photo.exif_timestamp]
@@ -132,7 +134,7 @@ def generate_event_albums(user):
             logger.info('job {}: processing auto album with date: '.format(job_id) + key.strftime(date_format))
             items = group
             if len(group) >= 2:
-                qs = AlbumAuto.objects.filter(timestamp=key).filter(owner=user)
+                qs = AlbumAuto.objects.filter(timestamp=key).filter(Q(owner=user) | Q(owner__collaborators=user))
                 if qs.count() == 0:
                     album = AlbumAuto(created_on=datetime.utcnow().replace(tzinfo=pytz.utc), owner=user)
                     album.timestamp = key

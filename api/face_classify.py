@@ -18,6 +18,7 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn import svm
 from sklearn.manifold import TSNE
+from django.db.models import Q
 
 import seaborn as sns
 from django_rq import job
@@ -35,12 +36,12 @@ def cluster_faces(user):
 
     people = [
         p.id
-        for p in Person.objects.filter(faces__photo__owner=user).distinct()
+        for p in Person.objects.filter(Q(faces__photo__owner=user) | Q(faces__photo__owner__collaborators=user)).distinct()
     ]
     colors = sns.color_palette('Dark2', len(people)).as_hex()
     p2c = dict(zip(people, colors))
 
-    faces = Face.objects.filter(photo__owner=user)
+    faces = Face.objects.filter(Q(photo__owner=user) | Q(photo__owner__collaborators=user))
     face_encodings_all = []
     for face in faces:
         face_encoding = np.frombuffer(bytes.fromhex(face.encoding))
@@ -89,8 +90,7 @@ def train_faces(user):
 
     try:
 
-        faces = Face.objects.filter(
-            photo__owner=user).prefetch_related('person')
+        faces = Face.objects.filter(Q(photo__owner=user) | Q(photo__owner__collaborators=user)).prefetch_related('person')
 
         id2face_unknown = {}
         id2face_known = {}

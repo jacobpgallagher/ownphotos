@@ -96,6 +96,8 @@ class User(AbstractUser):
     nextcloud_scan_directory = models.CharField(
         max_length=512, db_index=True, null=True, blank=True)
 
+    collaborators = models.ManyToManyField('self')
+
 
 class Photo(models.Model):
     image_path = models.CharField(max_length=512, db_index=True, unique=True)
