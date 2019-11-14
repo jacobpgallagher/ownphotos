@@ -1,6 +1,7 @@
 from api.models import Face
 from api.models import Person
 from api.models import LongRunningJob
+from api.models import get_unknown_person
 
 import base64
 import pickle
@@ -152,12 +153,20 @@ def train_faces(user):
 
         target_count = len(face_ids_unknown)
 
+        unknown_person = get_unknown_person()
+
         for idx, (face_id, person_name, probability) in enumerate(zip(face_ids_unknown, pred, probs)):
             person = Person.objects.get(name=person_name)
             face = Face.objects.get(id=face_id)
-            face.person = person
-            face.person_label_is_inferred = True
-            face.person_label_probability = probability
+
+            if probability > 0.60:
+                face.person = person
+                face.person_label_is_inferred = True
+                face.person_label_probability = probability
+            else:
+                face.person = unknown_person
+                face.person_label_is_inferred = None
+                face.person_label_probability = 0
             face.save()
 
             lrj.result = {

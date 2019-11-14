@@ -1325,7 +1325,7 @@ class SetUserAlbumShared(APIView):
                     'message': "No such album"
                 }, status_code=400)
 
-        if user_album_to_share.owner != request.user:
+        if user_album_to_share.owner != request.user or user_album_to_share.owner.collaborators.filter(id=request.user.id).exists():
             logger.warning('Cannot share album to user: source user_album_id {} does not belong to user_id {}'.format(user_album_id, request.user.id))
             return Response(
                 {
@@ -1354,7 +1354,7 @@ class GeneratePhotoCaption(APIView):
         image_hash = data['image_hash']
 
         photo = Photo.objects.get(image_hash=image_hash)
-        if photo.owner != request.user:
+        if photo.owner != request.user or photo.owner.collaborators.filter(id=request.user.id).exists():
             return Response(
                 {
                     'status': False,
@@ -1462,7 +1462,7 @@ class SetPhotosPublic(APIView):
             except Photo.DoesNotExist:
                 logger.warning("Could not set photo {} to public. It does not exist.".format(image_hash))
                 continue
-            if photo.owner == request.user and photo.public != val_public:
+            if (photo.owner == request.user or photo.owner.collaborators.filter(id=request.user.id).exists()) and photo.public != val_public:
                 photo.public = val_public
                 photo.save()
                 updated.append(PhotoSerializer(photo).data)
@@ -1496,7 +1496,7 @@ class SetPhotosFavorite(APIView):
             except Photo.DoesNotExist:
                 logger.warning("Could not set photo {} to favorite. It does not exist.".format(image_hash))
                 continue
-            if photo.owner == request.user and photo.favorited != val_favorite:
+            if (photo.owner == request.user or photo.owner.collaborators.filter(id=request.user.id).exists()) and photo.favorited != val_favorite:
                 photo.favorited = val_favorite
                 photo.save()
                 updated.append(PhotoSerializer(photo).data)
@@ -1529,7 +1529,7 @@ class SetPhotosHidden(APIView):
             except Photo.DoesNotExist:
                 logger.warning("Could not set photo {} to hidden. It does not exist.".format(image_hash))
                 continue
-            if photo.owner == request.user and photo.hidden != val_hidden:
+            if (photo.owner == request.user or photo.owner.collaborators.filter(id=request.user.id).exists()) and photo.hidden != val_hidden:
                 photo.hidden = val_hidden
                 photo.save()
                 updated.append(PhotoSerializer(photo).data)
@@ -1558,7 +1558,7 @@ class SetFacePersonLabel(APIView):
         updated = []
         not_updated = []
         for face in faces.values():
-            if face.photo.owner == request.user:
+            if face.photo.owner == request.user or face.photo.owner.collaborators.filter(id=request.user.id).exists():
                 face.person = person
                 face.person_label_is_inferred = False
                 face.person_label_probability = 1.
@@ -1584,7 +1584,7 @@ class DeleteFaces(APIView):
         deleted = []
         not_deleted = []
         for face in faces.values():
-            if face.photo.owner == request.user:
+            if face.photo.owner == request.user or face.photo.owner.collaborators.filter(id=request.user.id).exists():
                 deleted.append(face.id)
                 face.delete()
             else:
@@ -1942,7 +1942,7 @@ class MediaAccessView(APIView):
         query_start = datetime.datetime.now()
         user = User.objects.filter(id=token['user_id']).only('id').first()
         # print('query', (datetime.datetime.now() - query_start).total_seconds())
-        if photo.owner == user or user in photo.shared_to.all():
+        if photo.owner == user or photo.owner.collaborators.filter(id=user.id).exists() or user in photo.shared_to.all():
             response = HttpResponse()
             response['Content-Type'] = 'image/jpeg'
             response[
@@ -2008,7 +2008,7 @@ class MediaAccessFullsizeOriginalView(APIView):
             query_start = datetime.datetime.now()
             user = User.objects.filter(id=token['user_id']).only('id').first()
             # print('query', (datetime.datetime.now() - query_start).total_seconds())
-            if photo.owner == user or user in photo.shared_to.all():
+            if photo.owner == user or photos.owner.collaborators.filter(id=user.id).exists() or user in photo.shared_to.all():
                 response = HttpResponse()
                 response['Content-Type'] = 'image/jpeg'
                 response[
@@ -2066,7 +2066,7 @@ class MediaAccessFullsizeOriginalView(APIView):
             query_start = datetime.datetime.now()
             user = User.objects.filter(id=token['user_id']).only('id').first()
             # print('query', (datetime.datetime.now() - query_start).total_seconds())
-            if photo.owner == user or user in photo.shared_to.all():
+            if photo.owner == user or photo.owner.collaborators.filter(id=user.id).exists() or user in photo.shared_to.all():
                 response = HttpResponse()
                 response['Content-Type'] = 'image/jpeg'
                 response[
