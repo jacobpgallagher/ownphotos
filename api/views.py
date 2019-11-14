@@ -360,7 +360,10 @@ class RecentlyAddedPhotoListViewSet(viewsets.ModelViewSet):
     pagination_class = HugeResultsSetPagination
 
     def get_queryset(self):
-        queryset = Photo.objects.filter(Q(owner=self.request.user) | Q(owner__collaborators=self.request.user)).only(
+        queryset = Photo.objects.filter(Q(owner=self.request.user) |
+                                        Q(owner__collaborators=self.request.user))\
+                                .exclude(hidden=True)\
+                                .only(
             'image_hash', 'exif_timestamp', 'favorited', 'public','added_on',
             'hidden').order_by('-added_on')
         return queryset
@@ -571,7 +574,8 @@ class NoTimestampPhotoHashListViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return Photo.objects.filter(exif_timestamp=None).filter(
-            Q(owner=self.request.user) | Q(owner__collaborators=self.request.user)).order_by('image_path')
+            Q(owner=self.request.user) | Q(owner__collaborators=self.request.user)).order_by('image_path')\
+            .exclude(hidden=True)
 
     @cache_response(CACHE_TTL, key_func=CustomObjectKeyConstructor())
     def retrieve(self, *args, **kwargs):
@@ -937,11 +941,12 @@ class AlbumDateListWithPhotoHashViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         qs = AlbumDate.objects.filter(Q(owner=self.request.user) | Q(owner__collaborators=self.request.user)) \
-            .exclude(date=None).order_by('-date') \
+            .exclude(date=None)\
+            .order_by('-date') \
             .prefetch_related(
                 Prefetch(
                     'photos',
-                    queryset=Photo.objects.filter(Q(owner=self.request.user) | Q(owner__collaborators=self.request.user)).order_by('-exif_timestamp').only(
+                    queryset=Photo.objects.filter(Q(owner=self.request.user) | Q(owner__collaborators=self.request.user)).exclude(hidden=True).order_by('-exif_timestamp').only(
                         'image_hash',
                         'public',
                         'exif_timestamp',

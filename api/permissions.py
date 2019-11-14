@@ -42,7 +42,7 @@ class IsPhotoOrAlbumSharedTo(permissions.BasePermission):
         if obj.public:
             return True
 
-        if obj.owner == request.user or request.user in obj.shared_to.all():
+        if obj.owner == request.user or obj.owner.collaborators.filter(id=request.user.id).exists() or request.user in obj.shared_to.all():
             return True
 
         for album in obj.albumuser_set.only('shared_to'):
