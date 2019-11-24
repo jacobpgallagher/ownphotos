@@ -23,12 +23,16 @@ class Command(BaseCommand):
 
         photo_count = qs.count()
         for idx, photo in enumerate(qs):
-            start = datetime.datetime.now()
-            photo._generate_captions()
-            elapsed_caption = (datetime.datetime.now() - start).total_seconds()
+            try:
+                start = datetime.datetime.now()
+                photo._generate_captions()
+                elapsed_caption = (datetime.datetime.now() - start).total_seconds()
 
-            start = datetime.datetime.now()
-            photo._im2vec()
-            elapsed_im2vec = (datetime.datetime.now() - start).total_seconds()
+                start = datetime.datetime.now()
+                photo._im2vec()
+                elapsed_im2vec = (datetime.datetime.now() - start).total_seconds()
 
-            logger.info("Processing %s/%s time: caption: %.2f im2vec: %.2f", idx + 1, photo_count, elapsed_caption, elapsed_im2vec)
+                logger.info("Processing %s/%s time: caption: %.2f im2vec: %.2f", idx + 1, photo_count, elapsed_caption, elapsed_im2vec)
+
+            except:
+                logging.exception("Error!")
