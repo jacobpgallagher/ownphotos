@@ -615,14 +615,14 @@ class Person(models.Model):
     KIND_CHOICES = (('USER', 'User Labelled'), ('CLUSTER', 'Cluster ID'),
                     ('UNKNOWN', 'Unknown Person'))
     name = models.CharField(blank=False, max_length=128)
-    kind = models.CharField(choices=KIND_CHOICES, max_length=10)
-    mean_face_encoding = models.TextField()
-    cluster_id = models.IntegerField(null=True)
+    kind = models.CharField(choices=KIND_CHOICES, max_length=10, blank=True)
+    mean_face_encoding = models.TextField(blank=True)
+    cluster_id = models.IntegerField(null=True, blank=True)
     account = models.OneToOneField(
-        User, on_delete=models.SET(get_deleted_user), default=None, null=True)
+        User, on_delete=models.SET(get_deleted_user), default=None, null=True, blank=True)
 
     def __str__(self):
-        return "%d" % self.id
+        return '{} - {}'.format(self.id, self.name)
 
     def _update_average_face_encoding(self):
         encodings = []
