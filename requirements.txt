@@ -64,9 +64,9 @@ pickleshare==0.7.4
 pipreqs==0.4.7
 plac==0.9.6
 preshed==2.0.1
-prompt-toolkit==1.0.14
 ptyprocess==0.5.2
-pycocotools==2.0.0
+pycocotools==2.0.1
+psycopg2-binary==2.8.4
 pycparser==2.19
 Pygments==2.2.0
 PyJWT==1.6.4
@@ -101,3 +101,7 @@ wrapt==1.10.11
 yarg==0.1.9
 joblib==0.13.2
 gevent==1.4.0
+numpy==1.17.3
+faiss-cpu
+jupyter==1.0.0
+prompt-toolkit==1.0.15

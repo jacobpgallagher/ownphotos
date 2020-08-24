@@ -1,5 +1,4 @@
-FROM ubuntu:16.04
-MAINTAINER Hooram Nam <nhooram@gmail.com>
+FROM ubuntu:18.04
 
 ENV MAPZEN_API_KEY mapzen-XXXX
 ENV MAPBOX_API_KEY mapbox-XXXX
@@ -13,38 +12,55 @@ RUN apt-get update && \
     libxrender-dev \
     wget \
     curl \
-    nginx 
+    nginx
 
-RUN apt-get install -y bzip2
+RUN apt-get install -y cmake python3-pip python-setuptools
+
+# RUN apt-get install -y bzip2
 
 
-RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-RUN bash Miniconda3-latest-Linux-x86_64.sh -b -p /miniconda
-# RUN apt-get install libopenblas-dev liblapack-dev
-RUN /miniconda/bin/conda install -y faiss-cpu -c pytorch
-RUN /miniconda/bin/conda install -y cython
+# RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+# RUN bash Miniconda3-latest-Linux-x86_64.sh -b -p /miniconda
+# # RUN apt-get install libopenblas-dev liblapack-dev
+# RUN /miniconda/bin/conda install -y faiss-cpu -c pytorch
+# RUN /miniconda/bin/conda install -y cython
 
-# Build and install dlib
-RUN apt-get update && \
-    apt-get install -y cmake git build-essential && \
-    git clone https://github.com/davisking/dlib.git && \
-    mkdir /dlib/build && \
-    cd /dlib/build && \
-    cmake .. -DDLIB_USE_CUDA=0 -DUSE_AVX_INSTRUCTIONS=0 && \
-    cmake --build . && \
-    cd /dlib && \
-    /miniconda/bin/python setup.py install --no USE_AVX_INSTRUCTIONS --no DLIB_USE_CUDA 
+# # Build and install dlib
+# RUN apt-get update && \
+#     apt-get install -y cmake git build-essential && \
+#     git clone https://github.com/davisking/dlib.git && \
+#     mkdir /dlib/build && \
+#     cd /dlib/build && \
+#     cmake .. -DDLIB_USE_CUDA=0 -DUSE_AVX_INSTRUCTIONS=0 && \
+#     cmake --build . && \
+#     cd /dlib && \
+#     /miniconda/bin/python setup.py install --no USE_AVX_INSTRUCTIONS --no DLIB_USE_CUDA
 
-RUN /miniconda/bin/conda install -y pytorch=0.4.1 -c pytorch
-# RUN /venv/bin/pip install http://download.pytorch.org/whl/cpu/torch-0.4.1-cp35-cp35m-linux_x86_64.whl && /venv/bin/pip install torchvision
-RUN /miniconda/bin/conda install -y psycopg2
+# RUN /miniconda/bin/conda install -y pytorch=0.4.1 -c pytorch
+# # RUN /venv/bin/pip install http://download.pytorch.org/whl/cpu/torch-0.4.1-cp35-cp35m-linux_x86_64.whl && /venv/bin/pip install torchvision
+# RUN /miniconda/bin/conda install -y psycopg2
+
+
+# Install libxext6
+RUN apt-get install -y libxext6
+
+# Install dlib
+RUN mkdir /dlib
+WORKDIR /dlib
+RUN wget https://github.com/davisking/dlib/archive/v19.18.tar.gz
+RUN tar xzvf v19.18.tar.gz
+WORKDIR /dlib/dlib-19.18
+RUN cmake .
+RUN python3 setup.py install
 
 RUN mkdir /code
 WORKDIR /code
 COPY requirements.txt /code/
-RUN /miniconda/bin/pip install -r requirements.txt
+# RUN pip3 install Cython==0.29.14
+# RUN pip3 install numpy==1.17.3
+RUN pip3 install -r requirements.txt
 
-RUN /miniconda/bin/python -m spacy download en_core_web_sm
+RUN python3 -m spacy download en_core_web_sm
 
 WORKDIR /code/api/places365
 RUN wget https://s3.eu-central-1.amazonaws.com/ownphotos-deploy/places365_model.tar.gz
@@ -70,7 +86,7 @@ ENV ADMIN_PASSWORD changeme
 # Django key. CHANGEME
 ENV SECRET_KEY supersecretkey
 # Until we serve media files properly (django dev server doesn't serve media files with with debug=false)
-ENV DEBUG true 
+ENV DEBUG true
 
 # Database connection info
 ENV DB_BACKEND postgresql

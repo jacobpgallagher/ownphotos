@@ -92,11 +92,11 @@ def handle_new_image(user, image_path, job_id):
                 elapsed_times['thumbnails'] = elapsed
                 logger.debug('thumbnail get took %.2f' % elapsed)
 
-                # start = datetime.datetime.now()
-                # photo._generate_captions()
-                # elapsed = (datetime.datetime.now() - start).total_seconds()
-                # elapsed_times['captions'] = elapsed
-                # logger.debug('caption generation took %.2f' % elapsed)
+                start = datetime.datetime.now()
+                photo._generate_captions()
+                elapsed = (datetime.datetime.now() - start).total_seconds()
+                elapsed_times['captions'] = elapsed
+                logger.debug('caption generation took %.2f' % elapsed)
 
 #                 start = datetime.datetime.now()
 #                 photo._save_image_to_db()
@@ -143,11 +143,11 @@ def handle_new_image(user, image_path, job_id):
                 elapsed_times['album_thing'] = elapsed
                 logger.debug('adding to AlbumThing took %.2f' % elapsed)
 
-                # start = datetime.datetime.now()
-                # photo._im2vec()
-                # elapsed = (datetime.datetime.now() - start).total_seconds()
-                # elapsed_times['im2vec'] = elapsed
-                # logger.debug('im2vec took %.2f' % elapsed)
+                start = datetime.datetime.now()
+                photo._im2vec()
+                elapsed = (datetime.datetime.now() - start).total_seconds()
+                elapsed_times['im2vec'] = elapsed
+                logger.debug('im2vec took %.2f' % elapsed)
 
                 logger.info("job {}: image processed: {}, elapsed: {}".format(job_id,img_abs_path,json.dumps(elapsed_times)))
 
