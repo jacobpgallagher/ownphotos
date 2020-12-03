@@ -102,6 +102,7 @@ yarg==0.1.9
 joblib==0.13.2
 gevent==1.4.0
 numpy==1.17.3
-faiss-cpu
+faiss-cpu==1.6.0
 jupyter==1.0.0
 prompt-toolkit==1.0.15
+enzyme==0.4.1

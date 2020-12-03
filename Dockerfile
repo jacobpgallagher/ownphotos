@@ -14,7 +14,7 @@ RUN apt-get update && \
     curl \
     nginx
 
-RUN apt-get install -y cmake python3-pip python-setuptools
+RUN apt-get install -y cmake python3-pip python-setuptools swig
 
 # RUN apt-get install -y bzip2
 
