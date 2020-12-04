@@ -14,6 +14,7 @@ import numpy as np
 import os
 import pytz
 import json
+import tempfile
 
 from collections import Counter
 from io import BytesIO
@@ -27,8 +28,10 @@ from django.contrib.auth.models import AbstractUser
 from django.db.models.signals import post_save, post_delete
 from django.core.cache import cache
 from django.contrib.postgres.fields import JSONField
+from django.core.exceptions import ObjectDoesNotExist
 
 from api.im2txt.sample import im2txt
+from api import video_utils
 
 import requests
 import base64
@@ -99,7 +102,148 @@ class User(AbstractUser):
     collaborators = models.ManyToManyField('self')
 
 
-class Photo(models.Model):
+class _ThumbnailMixin():
+    def _generate_and_save_thumbnails(self, image, media_hash):
+        # If no ExifTags, no rotating needed.
+        try:
+            # Grab orientation value.
+            image_exif = image._getexif()
+            image_orientation = image_exif[274]
+
+            # Rotate depending on orientation.
+            if image_orientation == 2:
+                image = image.transpose(PIL.Image.FLIP_LEFT_RIGHT)
+            if image_orientation == 3:
+                image = image.transpose(PIL.Image.ROTATE_180)
+            if image_orientation == 4:
+                image = image.transpose(PIL.Image.FLIP_TOP_BOTTOM)
+            if image_orientation == 5:
+                image = image.transpose(PIL.Image.FLIP_LEFT_RIGHT).transpose(
+                    PIL.Image.ROTATE_90)
+            if image_orientation == 6:
+                image = image.transpose(PIL.Image.ROTATE_270)
+            if image_orientation == 7:
+                image = image.transpose(PIL.Image.FLIP_TOP_BOTTOM).transpose(
+                    PIL.Image.ROTATE_90)
+            if image_orientation == 8:
+                image = image.transpose(PIL.Image.ROTATE_90)
+        except:
+            pass
+
+        # make thumbnails
+        image.thumbnail(ownphotos.settings.THUMBNAIL_SIZE_BIG,
+                        PIL.Image.ANTIALIAS)
+        image_io_thumb = BytesIO()
+        image.save(image_io_thumb, format="JPEG")
+        self.thumbnail_big.save(media_hash + '.jpg',
+                                ContentFile(image_io_thumb.getvalue()))
+        image_io_thumb.close()
+
+        square_thumb = ImageOps.fit(
+            image, ownphotos.settings.THUMBNAIL_SIZE_BIG, PIL.Image.ANTIALIAS)
+        image_io_square_thumb = BytesIO()
+        square_thumb.save(image_io_square_thumb, format="JPEG")
+        self.square_thumbnail_big.save(
+            media_hash + '.jpg',
+            ContentFile(image_io_square_thumb.getvalue()))
+        image_io_square_thumb.close()
+
+        image.thumbnail(ownphotos.settings.THUMBNAIL_SIZE_MEDIUM,
+                        PIL.Image.ANTIALIAS)
+        image_io_thumb = BytesIO()
+        image.save(image_io_thumb, format="JPEG")
+        self.thumbnail.save(media_hash + '.jpg',
+                            ContentFile(image_io_thumb.getvalue()))
+        image_io_thumb.close()
+
+        square_thumb = ImageOps.fit(image,
+                                    ownphotos.settings.THUMBNAIL_SIZE_MEDIUM,
+                                    PIL.Image.ANTIALIAS)
+        image_io_square_thumb = BytesIO()
+        square_thumb.save(image_io_square_thumb, format="JPEG")
+        self.square_thumbnail.save(
+            media_hash + '.jpg',
+            ContentFile(image_io_square_thumb.getvalue()))
+        image_io_square_thumb.close()
+
+        image.thumbnail(ownphotos.settings.THUMBNAIL_SIZE_SMALL,
+                        PIL.Image.ANTIALIAS)
+        image_io_thumb = BytesIO()
+        image.save(image_io_thumb, format="JPEG")
+        self.thumbnail_small.save(media_hash + '.jpg',
+                                  ContentFile(image_io_thumb.getvalue()))
+        image_io_thumb.close()
+
+        square_thumb = ImageOps.fit(image,
+                                    ownphotos.settings.THUMBNAIL_SIZE_SMALL,
+                                    PIL.Image.ANTIALIAS)
+        image_io_square_thumb = BytesIO()
+        square_thumb.save(image_io_square_thumb, format="JPEG")
+        self.square_thumbnail_small.save(
+            media_hash + '.jpg',
+            ContentFile(image_io_square_thumb.getvalue()))
+        image_io_square_thumb.close()
+
+        image.thumbnail(ownphotos.settings.THUMBNAIL_SIZE_TINY,
+                        PIL.Image.ANTIALIAS)
+        image_io_thumb = BytesIO()
+        image.save(image_io_thumb, format="JPEG")
+        self.thumbnail_tiny.save(media_hash + '.jpg',
+                                 ContentFile(image_io_thumb.getvalue()))
+        image_io_thumb.close()
+
+        square_thumb = ImageOps.fit(
+            image, ownphotos.settings.THUMBNAIL_SIZE_TINY, PIL.Image.ANTIALIAS)
+        image_io_square_thumb = BytesIO()
+        square_thumb.save(image_io_square_thumb, format="JPEG")
+        self.square_thumbnail_tiny.save(
+            media_hash + '.jpg',
+            ContentFile(image_io_square_thumb.getvalue()))
+        image_io_square_thumb.close()
+
+
+
+class Media(models.Model, _ThumbnailMixin):
+    meta_gps_lat = models.FloatField(blank=True, null=True)
+    meta_gps_lon = models.FloatField(blank=True, null=True)
+    meta_timestamp = models.DateTimeField(blank=True, null=True, db_index=True)
+
+    thumbnail = models.ImageField(upload_to='thumbnails')
+    thumbnail_tiny = models.ImageField(upload_to='thumbnails_tiny')
+    thumbnail_small = models.ImageField(upload_to='thumbnails_small')
+    thumbnail_big = models.ImageField(upload_to='thumbnails_big')
+
+    square_thumbnail = models.ImageField(upload_to='square_thumbnails')
+    square_thumbnail_tiny = models.ImageField(upload_to='square_thumbnails_tiny')
+    square_thumbnail_small = models.ImageField(upload_to='square_thumbnails_small')
+    square_thumbnail_big = models.ImageField(upload_to='square_thumbnails_big')
+
+
+
+    favorited = models.BooleanField(default=False, db_index=True)
+    hidden = models.BooleanField(default=False, db_index=True)
+
+    owner = models.ForeignKey(User, on_delete=models.SET(get_deleted_user), default=None)
+
+    shared_to = models.ManyToManyField(User, related_name='media_shared_to')
+
+    public = models.BooleanField(default=False, db_index=True)
+
+    def _generate_thumbnail(self, frame=0):
+        if frame != 0:
+            raise NotImplementedError
+
+        try:
+            image = PIL.Image.open(self.photo.image_path)
+            self._generate_and_save_thumbnails(image, self.photo.image_hash)
+        except ObjectDoesNotExist:
+            with tempfile.TemporaryFile() as fobj:
+                image = PIL.Image.open(video_utils.extract_frame_from_video(self.video.video_path, output_file=fobj))
+
+                self._generate_and_save_thumbnails(image, self.video.video_hash)
+
+
+class Photo(models.Model, _ThumbnailMixin):
     image_path = models.CharField(max_length=512, db_index=True, unique=True)
     # md5_{user.id}
     image_hash = models.CharField(primary_key=True, max_length=64, null=False)
@@ -142,6 +286,9 @@ class Photo(models.Model):
 
     public = models.BooleanField(default=False, db_index=True)
     encoding = models.TextField(default=None, null=True)
+
+    media = models.OneToOneField(Media, on_delete=models.CASCADE, null=False)
+
 
     def _generate_md5(self):
         hash_md5 = hashlib.md5()
@@ -237,103 +384,7 @@ class Photo(models.Model):
 
     def _generate_thumbnail(self):
         image = PIL.Image.open(self.image_path)
-
-        # If no ExifTags, no rotating needed.
-        try:
-            # Grab orientation value.
-            image_exif = image._getexif()
-            image_orientation = image_exif[274]
-
-            # Rotate depending on orientation.
-            if image_orientation == 2:
-                image = image.transpose(PIL.Image.FLIP_LEFT_RIGHT)
-            if image_orientation == 3:
-                image = image.transpose(PIL.Image.ROTATE_180)
-            if image_orientation == 4:
-                image = image.transpose(PIL.Image.FLIP_TOP_BOTTOM)
-            if image_orientation == 5:
-                image = image.transpose(PIL.Image.FLIP_LEFT_RIGHT).transpose(
-                    PIL.Image.ROTATE_90)
-            if image_orientation == 6:
-                image = image.transpose(PIL.Image.ROTATE_270)
-            if image_orientation == 7:
-                image = image.transpose(PIL.Image.FLIP_TOP_BOTTOM).transpose(
-                    PIL.Image.ROTATE_90)
-            if image_orientation == 8:
-                image = image.transpose(PIL.Image.ROTATE_90)
-        except:
-            pass
-
-        # make thumbnails
-        image.thumbnail(ownphotos.settings.THUMBNAIL_SIZE_BIG,
-                        PIL.Image.ANTIALIAS)
-        image_io_thumb = BytesIO()
-        image.save(image_io_thumb, format="JPEG")
-        self.thumbnail_big.save(self.image_hash + '.jpg',
-                                ContentFile(image_io_thumb.getvalue()))
-        image_io_thumb.close()
-
-        square_thumb = ImageOps.fit(
-            image, ownphotos.settings.THUMBNAIL_SIZE_BIG, PIL.Image.ANTIALIAS)
-        image_io_square_thumb = BytesIO()
-        square_thumb.save(image_io_square_thumb, format="JPEG")
-        self.square_thumbnail_big.save(
-            self.image_hash + '.jpg',
-            ContentFile(image_io_square_thumb.getvalue()))
-        image_io_square_thumb.close()
-
-        image.thumbnail(ownphotos.settings.THUMBNAIL_SIZE_MEDIUM,
-                        PIL.Image.ANTIALIAS)
-        image_io_thumb = BytesIO()
-        image.save(image_io_thumb, format="JPEG")
-        self.thumbnail.save(self.image_hash + '.jpg',
-                            ContentFile(image_io_thumb.getvalue()))
-        image_io_thumb.close()
-
-        square_thumb = ImageOps.fit(image,
-                                    ownphotos.settings.THUMBNAIL_SIZE_MEDIUM,
-                                    PIL.Image.ANTIALIAS)
-        image_io_square_thumb = BytesIO()
-        square_thumb.save(image_io_square_thumb, format="JPEG")
-        self.square_thumbnail.save(
-            self.image_hash + '.jpg',
-            ContentFile(image_io_square_thumb.getvalue()))
-        image_io_square_thumb.close()
-
-        image.thumbnail(ownphotos.settings.THUMBNAIL_SIZE_SMALL,
-                        PIL.Image.ANTIALIAS)
-        image_io_thumb = BytesIO()
-        image.save(image_io_thumb, format="JPEG")
-        self.thumbnail_small.save(self.image_hash + '.jpg',
-                                  ContentFile(image_io_thumb.getvalue()))
-        image_io_thumb.close()
-
-        square_thumb = ImageOps.fit(image,
-                                    ownphotos.settings.THUMBNAIL_SIZE_SMALL,
-                                    PIL.Image.ANTIALIAS)
-        image_io_square_thumb = BytesIO()
-        square_thumb.save(image_io_square_thumb, format="JPEG")
-        self.square_thumbnail_small.save(
-            self.image_hash + '.jpg',
-            ContentFile(image_io_square_thumb.getvalue()))
-        image_io_square_thumb.close()
-
-        image.thumbnail(ownphotos.settings.THUMBNAIL_SIZE_TINY,
-                        PIL.Image.ANTIALIAS)
-        image_io_thumb = BytesIO()
-        image.save(image_io_thumb, format="JPEG")
-        self.thumbnail_tiny.save(self.image_hash + '.jpg',
-                                 ContentFile(image_io_thumb.getvalue()))
-        image_io_thumb.close()
-
-        square_thumb = ImageOps.fit(
-            image, ownphotos.settings.THUMBNAIL_SIZE_TINY, PIL.Image.ANTIALIAS)
-        image_io_square_thumb = BytesIO()
-        square_thumb.save(image_io_square_thumb, format="JPEG")
-        self.square_thumbnail_tiny.save(
-            self.image_hash + '.jpg',
-            ContentFile(image_io_square_thumb.getvalue()))
-        image_io_square_thumb.close()
+        self._generate_and_save_thumbnails(image, self.image_hash)
 
     def _save_image_to_db(self):
         image = PIL.Image.open(self.image_path)
@@ -609,6 +660,17 @@ class Photo(models.Model):
 
     def __str__(self):
         return "%s" % self.image_hash
+
+class Video(models.Model):
+    video_path = models.CharField(max_length=512, db_index=True, unique=True)
+    video_hash = models.CharField(primary_key=True, max_length=64, null=False)
+
+    added_on = models.DateTimeField(null=False, blank=False, db_index=True, auto_now_add=True)
+
+    meta_json = JSONField(blank=True, null=True)
+
+    media = models.OneToOneField(Media, on_delete=models.CASCADE, null=False)
+
 
 
 class Person(models.Model):

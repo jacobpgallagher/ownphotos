@@ -12,7 +12,7 @@ services:
       - "frontend:frontend"
     ports:
       - "3000:80"
-      
+
   ownphotos-db:
     image: postgres
     container_name: ownphotos-db
@@ -64,10 +64,11 @@ services:
       - REDIS_PORT=6379
       - MAPBOX_API_KEY=CHANGE_MEAAAA
       - TIME_ZONE=UTC
+      - DJANGO_LOG_LEVEL=DEBUG
     links:
       - "ownphotos-db:ownphotos-db"
       - "ownphotos-redis:ownphotos-redis"
-  
+
   ownphotos-redis:
     image: redis
     container_name: ownphotos-redis

@@ -14,7 +14,7 @@ RUN apt-get update && \
     curl \
     nginx
 
-RUN apt-get install -y cmake python3-pip python-setuptools swig
+RUN apt-get install -y cmake python3-pip python-setuptools swig ffmpeg
 
 # RUN apt-get install -y bzip2
 
@@ -56,8 +56,8 @@ RUN python3 setup.py install
 RUN mkdir /code
 WORKDIR /code
 COPY requirements.txt /code/
-# RUN pip3 install Cython==0.29.14
-# RUN pip3 install numpy==1.17.3
+RUN pip3 install Cython==0.29.14
+RUN pip3 install numpy==1.17.3
 RUN pip3 install -r requirements.txt
 
 RUN python3 -m spacy download en_core_web_sm
