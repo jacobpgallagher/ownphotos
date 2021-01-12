@@ -1,4 +1,4 @@
-from api.models import Photo, AlbumAuto, AlbumUser, AlbumPlace, Face, Person, AlbumDate, AlbumThing, LongRunningJob, User
+from api.models import Photo, AlbumAuto, AlbumUser, AlbumPlace, Face, Person, AlbumDate, AlbumThing, LongRunningJob, User, Media, Video
 from rest_framework import serializers
 import ipdb
 import json
@@ -13,6 +13,7 @@ from api.image_similarity import search_similar_image
 
 import logging
 logger = logging.getLogger(__name__)
+
 
 
 class SimpleUserSerializer(serializers.ModelSerializer):
@@ -181,6 +182,43 @@ class PhotoSerializer(serializers.ModelSerializer):
 
     def get_people(self, obj):
         return [f.person.name for f in obj.faces.all()]
+
+class PhotoSerializer2(serializers.ModelSerializer):
+    class Meta:
+        model = Photo
+        fields = ('image_hash', 'added_on')
+
+class VideoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Video
+        fields = ('video_hash', 'added_on')
+
+
+
+class MediaSerializer(serializers.ModelSerializer):
+    photo = PhotoSerializer2(read_only=True)
+    video = VideoSerializer(read_only=True)
+    class Meta:
+        model = Media
+        exclude = ('encoding',)
+        read_only_fields = (
+            'meta_gps_lat',
+            'meta_gps_lon',
+            'meta_timestamp',
+            'thumbnail',
+            'thumbnail_tiny',
+            'thumbnail_small',
+            'thumbnail_big',
+            'square_thumbnail',
+            'square_thumbnail_tiny',
+            'square_thumbnail_small',
+            'square_thumbnail_big',
+            'geolocation_json',
+            'captions_json',
+            'search_captions',
+            'search_location',
+            'owner',
+        )
 
 
 class PersonSerializer(serializers.ModelSerializer):
@@ -805,5 +843,5 @@ class SharedFromMePhotoThroughSerializer(serializers.ModelSerializer):
     user = SimpleUserSerializer(many=False, read_only=True)
 
     class Meta:
-        model = Photo.shared_to.through
+        model = Media.shared_to.through
         fields = ('user_id', 'user', 'photo')

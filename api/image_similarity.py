@@ -1,4 +1,4 @@
-from api.models import Photo, User
+from api.models import Media, User
 import requests
 import numpy as np
 from django.db.models import Q
@@ -7,9 +7,9 @@ from ownphotos.settings import IMAGE_SIMILARITY_SERVER
 import logging
 logger = logging.getLogger(__name__)
 
-def search_similar_image(user,photo):
-    # Skip photos that haven't been processed
-    if not photo.encoding:
+def search_similar_image(user,media):
+    # Skip medias that haven't been processed
+    if not media.encoding:
         return
 
     if type(user) == int:
@@ -18,7 +18,7 @@ def search_similar_image(user,photo):
         user_id = user.id
 
     image_embedding = np.array(
-        np.frombuffer(bytes.fromhex(photo.encoding)), dtype=np.float32)
+        np.frombuffer(bytes.fromhex(media.encoding)), dtype=np.float32)
     post_data = {
         "user_id":user_id,
         "image_embedding":image_embedding.tolist()
@@ -27,20 +27,20 @@ def search_similar_image(user,photo):
     if res.status_code==200:
         return res.json()
     else:
-        logger.error('error retrieving similar photos to {} belonging to user {}'.format(photo.image_hash,user.username))
+        logger.error('error retrieving similar medias to {} belonging to user {}'.format(media.pk, user.username))
         return
 
 def build_image_similarity_index(user):
     logger.info('builing similarity index for user {}'.format(user.username))
-    photos = Photo.objects.filter(Q(owner=user) | Q(owner__collaborators=user)).exclude(encoding=None).only('encoding')
+    medias = Media.objects.filter(Q(owner=user) | Q(owner__collaborators=user)).exclude(encoding=None).only('encoding')
 
     image_hashes = []
     image_embeddings = []
 
-    for photo in photos:
-        image_hashes.append(photo.image_hash)
+    for media in medias:
+        image_hashes.append(media.pk)
         image_embedding = np.array(
-            np.frombuffer(bytes.fromhex(photo.encoding)), dtype=np.float32)
+            np.frombuffer(bytes.fromhex(media.encoding)), dtype=np.float32)
         image_embeddings.append(image_embedding.tolist())
 
     post_data = {

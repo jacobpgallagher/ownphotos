@@ -25,14 +25,43 @@ def make_medias(apps, schema_editor):
             square_thumbnail_tiny=photo.square_thumbnail_tiny,
             square_thumbnail_small=photo.square_thumbnail_small,
             square_thumbnail_big=photo.square_thumbnail_big,
+            geolocation_json=photo.geolocation_json,
+            captions_json=photo.captions_json,
+            search_captions=photo.search_captions,
+            search_location=photo.search_location,
             favorited=photo.favorited,
             hidden=photo.hidden,
+            encoding=photo.encoding,
         )
         photo.media = m
         photo.save()
 
 def unmake_medias(apps, schema_editor):
     Photo = apps.get_model('api', 'Photo')
+    Media = apps.get_model('api', 'Media')
+
+    for media in Media.objects.filter(photo__isnull=False):
+        media.photo.owner = media.owner
+        media.photo.exif_gps_lat = media.meta_gps_lat
+        media.photo.exit_gps_lon = media.meta_gps_lon
+        media.photo.exif_timestamp = media.meta_timestamp
+        media.photo.thumbnail = media.thumbnail
+        media.photo.thumbnail_tiny = media.thumbnail_tiny
+        media.photo.thumbnail_small = media.thumbnail_small
+        media.photo.thumbnail_big = media.thumbnail_big
+        media.photo.square_thumbnail = media.square_thumbnail
+        media.photo.square_thumbnail_tiny = media.square_thumbnail_tiny
+        media.photo.square_thumbnail_small = media.square_thumbnail_small
+        media.photo.square_thumbnail_big = media.square_thumbnail_big
+        media.photo.geolocation_json = media.geolocation_json
+        media.photo.captions_json = media.captions_json
+        media.photo.search_captions = media.search_captions
+        media.photo.search_location = media.search_locations
+        media.photo.favorited = media.favorited
+        media.photo.hidden = media.hidden
+        media.photo.encoding = media.encoding
+        media.photo.save()
+
     Photo.objects.update(media=None)
 
 
@@ -58,9 +87,14 @@ class Migration(migrations.Migration):
                 ('square_thumbnail_tiny', models.ImageField(upload_to='square_thumbnails_tiny')),
                 ('square_thumbnail_small', models.ImageField(upload_to='square_thumbnails_small')),
                 ('square_thumbnail_big', models.ImageField(upload_to='square_thumbnails_big')),
+                ('geolocation_json', django.contrib.postgres.fields.jsonb.JSONField(blank=True, db_index=True, null=True)),
+                ('captions_json', django.contrib.postgres.fields.jsonb.JSONField(blank=True, db_index=True, null=True)),
+                ('search_captions', models.TextField(blank=True, db_index=True, null=True)),
+                ('search_location', models.TextField(blank=True, db_index=True, null=True)),
                 ('favorited', models.BooleanField(db_index=True, default=False)),
                 ('hidden', models.BooleanField(db_index=True, default=False)),
                 ('public', models.BooleanField(db_index=True, default=False)),
+                ('encoding', models.TextField(default=None, null=True)),
                 ('owner', models.ForeignKey(default=None, on_delete=models.SET(api.models.get_deleted_user), to=settings.AUTH_USER_MODEL)),
                 ('shared_to', models.ManyToManyField(related_name='media_shared_to', to=settings.AUTH_USER_MODEL)),
             ],
@@ -106,5 +140,89 @@ class Migration(migrations.Migration):
             model_name='photo',
             name='media',
             field=models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to='api.Media'),
+        ),
+        migrations.RemoveField(
+            model_name='photo',
+            name='captions_json',
+        ),
+        migrations.RemoveField(
+            model_name='photo',
+            name='encoding',
+        ),
+        migrations.RemoveField(
+            model_name='photo',
+            name='exif_gps_lat',
+        ),
+        migrations.RemoveField(
+            model_name='photo',
+            name='exif_gps_lon',
+        ),
+        migrations.RemoveField(
+            model_name='photo',
+            name='exif_timestamp',
+        ),
+        migrations.RemoveField(
+            model_name='photo',
+            name='favorited',
+        ),
+        migrations.RemoveField(
+            model_name='photo',
+            name='geolocation_json',
+        ),
+        migrations.RemoveField(
+            model_name='photo',
+            name='hidden',
+        ),
+        migrations.RemoveField(
+            model_name='photo',
+            name='owner',
+        ),
+        migrations.RemoveField(
+            model_name='photo',
+            name='public',
+        ),
+        migrations.RemoveField(
+            model_name='photo',
+            name='search_captions',
+        ),
+        migrations.RemoveField(
+            model_name='photo',
+            name='search_location',
+        ),
+        migrations.RemoveField(
+            model_name='photo',
+            name='shared_to',
+        ),
+        migrations.RemoveField(
+            model_name='photo',
+            name='square_thumbnail',
+        ),
+        migrations.RemoveField(
+            model_name='photo',
+            name='square_thumbnail_big',
+        ),
+        migrations.RemoveField(
+            model_name='photo',
+            name='square_thumbnail_small',
+        ),
+        migrations.RemoveField(
+            model_name='photo',
+            name='square_thumbnail_tiny',
+        ),
+        migrations.RemoveField(
+            model_name='photo',
+            name='thumbnail',
+        ),
+        migrations.RemoveField(
+            model_name='photo',
+            name='thumbnail_big',
+        ),
+        migrations.RemoveField(
+            model_name='photo',
+            name='thumbnail_small',
+        ),
+        migrations.RemoveField(
+            model_name='photo',
+            name='thumbnail_tiny',
         ),
     ]

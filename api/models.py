@@ -219,6 +219,11 @@ class Media(models.Model, _ThumbnailMixin):
     square_thumbnail_big = models.ImageField(upload_to='square_thumbnails_big')
 
 
+    geolocation_json = JSONField(blank=True, null=True, db_index=True)
+    captions_json = JSONField(blank=True, null=True, db_index=True)
+
+    search_captions = models.TextField(blank=True, null=True, db_index=True)
+    search_location = models.TextField(blank=True, null=True, db_index=True)
 
     favorited = models.BooleanField(default=False, db_index=True)
     hidden = models.BooleanField(default=False, db_index=True)
@@ -228,6 +233,8 @@ class Media(models.Model, _ThumbnailMixin):
     shared_to = models.ManyToManyField(User, related_name='media_shared_to')
 
     public = models.BooleanField(default=False, db_index=True)
+
+    encoding = models.TextField(default=None, null=True)
 
     def _generate_thumbnail(self, frame=0):
         if frame != 0:
@@ -248,44 +255,11 @@ class Photo(models.Model, _ThumbnailMixin):
     # md5_{user.id}
     image_hash = models.CharField(primary_key=True, max_length=64, null=False)
 
-    thumbnail = models.ImageField(upload_to='thumbnails')
-    thumbnail_tiny = models.ImageField(upload_to='thumbnails_tiny')
-    thumbnail_small = models.ImageField(upload_to='thumbnails_small')
-    thumbnail_big = models.ImageField(upload_to='thumbnails_big')
-
-    square_thumbnail = models.ImageField(upload_to='square_thumbnails')
-    square_thumbnail_tiny = models.ImageField(
-        upload_to='square_thumbnails_tiny')
-    square_thumbnail_small = models.ImageField(
-        upload_to='square_thumbnails_small')
-    square_thumbnail_big = models.ImageField(upload_to='square_thumbnails_big')
-
     image = models.ImageField(upload_to='photos')
 
     added_on = models.DateTimeField(null=False, blank=False, db_index=True)
 
-    exif_gps_lat = models.FloatField(blank=True, null=True)
-    exif_gps_lon = models.FloatField(blank=True, null=True)
-    exif_timestamp = models.DateTimeField(blank=True, null=True, db_index=True)
-
     exif_json = JSONField(blank=True, null=True)
-
-    geolocation_json = JSONField(blank=True, null=True, db_index=True)
-    captions_json = JSONField(blank=True, null=True, db_index=True)
-
-    search_captions = models.TextField(blank=True, null=True, db_index=True)
-    search_location = models.TextField(blank=True, null=True, db_index=True)
-
-    favorited = models.BooleanField(default=False, db_index=True)
-    hidden = models.BooleanField(default=False, db_index=True)
-
-    owner = models.ForeignKey(
-        User, on_delete=models.SET(get_deleted_user), default=None)
-
-    shared_to = models.ManyToManyField(User, related_name='photo_shared_to')
-
-    public = models.BooleanField(default=False, db_index=True)
-    encoding = models.TextField(default=None, null=True)
 
     media = models.OneToOneField(Media, on_delete=models.CASCADE, null=False)
 

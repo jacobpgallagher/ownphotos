@@ -1,12 +1,15 @@
+import django_filters.rest_framework
+
 from django.shortcuts import render
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
+from rest_framework import mixins
 
 from constance import config as site_config
 
-from api.models import Photo, AlbumAuto, AlbumUser, Face, Person, AlbumDate, AlbumPlace, AlbumThing, LongRunningJob, User, get_or_create_person
+from api.models import Photo, AlbumAuto, AlbumUser, Face, Person, AlbumDate, AlbumPlace, AlbumThing, LongRunningJob, User, get_or_create_person, Media, Video
 from django.db.models import Count
 from django.db.models import Q
 from django.db.models import Prefetch
@@ -15,7 +18,9 @@ from django.http import HttpResponse
 from django.http import HttpResponseForbidden
 
 from rest_framework import viewsets
+from rest_framework import generics
 
+from api.serializers import MediaSerializer
 from api.serializers import PhotoSerializer
 from api.serializers import PhotoEditSerializer
 from api.serializers import PhotoHashListSerializer
@@ -55,7 +60,7 @@ from api.serializers_serpy import AlbumDateListWithPhotoHashSerializer as AlbumD
 from api.serializers_serpy import PhotoSuperSimpleSerializer as PhotoSuperSimpleSerializerSerpy
 from api.serializers_serpy import PhotoSuperSimpleSerializerWithAddedOn as PhotoSuperSimpleSerializerWithAddedOnSerpy
 from api.serializers_serpy import SharedPhotoSuperSimpleSerializer as SharedPhotoSuperSimpleSerializerSerpy
-from api.permissions import IsOwnerOrReadOnly, IsUserOrReadOnly, IsPhotoOrAlbumSharedTo, IsRegistrationAllowed
+from api.permissions import IsOwnerOrReadOnly, IsUserOrReadOnly, IsPhotoOrAlbumSharedTo, IsRegistrationAllowed, IsMediaSharedTo
 
 from api.face_classify import train_faces, cluster_faces
 from api.social_graph import build_social_graph, build_ego_graph
@@ -186,6 +191,27 @@ def queue_can_accept_job():
 
 
 # Create your views here.
+
+class MediaViewSet(mixins.RetrieveModelMixin,
+                   mixins.UpdateModelMixin,
+                   mixins.ListModelMixin,
+                   viewsets.GenericViewSet):
+    serializer_class = MediaSerializer
+    pagination_class = HugeResultsSetPagination
+    permission_classes = (IsAuthenticated,)
+    queryset = Media.objects.all()
+    filterset_fields = ['id', 'meta_gps_lat', 'meta_gps_lon', 'meta_timestamp',
+                        'search_captions', 'search_location',
+                        'favorited', 'hidden',
+                        'owner', 'public']
+    filter_backends = [django_filters.rest_framework.DjangoFilterBackend, filters.OrderingFilter]
+    ordering_fields = ['meta_timestamp', 'favorited']
+
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = super().get_queryset()
+        return qs.filter(Q(owner=user) | Q(owner__collaborators=user))
 
 
 # @six.add_metaclass(OptimizeRelatedModelViewSetMetaclass)

@@ -51,6 +51,16 @@ class IsPhotoOrAlbumSharedTo(permissions.BasePermission):
 
         return False
 
+class IsMediaSharedTo(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        if obj.public:
+            return True
+
+        if obj.owner == request.user or obj.owner.collaborators.filter(id=request.user.id).exists() or request.user in obj.shared_to.all():
+            return True
+
+        return False
+
 
 class IsRegistrationAllowed(permissions.BasePermission):
     """

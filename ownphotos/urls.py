@@ -197,9 +197,11 @@ router.register(r'api/faces', views.FaceViewSet)
 
 router.register(r'api/jobs', views.LongRunningJobViewSet)
 
+
 urlpatterns = [
     url(r'^', include(router.urls)),
     url(r'^api/admin/', admin.site.urls),
+    url(r'^api/v2/', include('api.urls')),
     url(r'^api/sitesettings', views.SiteSettingsView.as_view()),
     url(r'^api/dirtree', views.RootPathTreeView.as_view()),
     url(r'^api/labelfaces', views.SetFacePersonLabel.as_view()),

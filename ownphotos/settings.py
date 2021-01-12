@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'api',
     'nextcloud',
     'rest_framework',
+    'django_filters',
     'corsheaders',
     'django_extensions',
     "django_rq",
