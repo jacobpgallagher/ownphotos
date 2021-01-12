@@ -1,5 +1,10 @@
 #! /bin/bash
 export PYTHONUNBUFFERED=TRUE
+
+local log_dir = "logs"
+if [ -z "${LOG_DIR}" ]; then
+    log_dir = "${LOG_DIR}"
+fi
 mkdir -p /code/logs
 
 cp /code/nginx.conf /etc/nginx/sites-enabled/default
@@ -13,14 +18,13 @@ service nginx restart
 # source /venv/bin/activate
 
 
-
 pip3 install gevent
 
-python3 image_similarity/main.py 2>&1 | tee logs/gunicorn_image_similarity.log &
+python3 image_similarity/main.py 2>&1 | tee ${log_dir}/gunicorn_image_similarity.log &
 
-python3 manage.py makemigrations api 2>&1 | tee logs/command_makemigrations.log
-python3 manage.py migrate 2>&1 | tee logs/command_migrate.log
-python3 manage.py build_similarity_index 2>&1 | tee logs/command_build_similarity_index.log
+#python3 manage.py makemigrations api 2>&1 | tee ${log_dir}/command_makemigrations.log
+#python3 manage.py migrate 2>&1 | tee ${log_dir}/command_migrate.log
+python3 manage.py build_similarity_index 2>&1 | tee ${log_dir}/command_build_similarity_index.log
 
 python3 manage.py shell <<EOF
 from api.models import User
@@ -37,5 +41,9 @@ echo "Running backend server..."
 
 
 python3 manage.py collectstatic --noinput
-python3 manage.py rqworker default 2>&1 | tee logs/rqworker.log &
-gunicorn --workers=2 --worker-class=gevent --bind 0.0.0.0:8001 --log-level=info ownphotos.wsgi 2>&1 | tee logs/gunicorn_django.log
+python3 manage.py rqworker default 2>&1 | tee ${log_dir}/rqworker.log &
+if [[ ${DEV_SERVER} ]]; then
+    python3 manage.py runserver 0.0.0.0:8001 2>&1 | tee ${log_dir}/dev_django.log
+else
+    gunicorn --workers=2 --worker-class=gevent --bind 0.0.0.0:8001 --log-level=info ownphotos.wsgi 2>&1 | tee ${log_dir}/gunicorn_django.log
+fi

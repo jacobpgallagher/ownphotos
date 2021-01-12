@@ -1,3 +1,4 @@
+import os
 import logging
 import logging.handlers
 
@@ -6,7 +7,7 @@ fomatter = logging.Formatter(
             '%(asctime)s : %(filename)s : %(funcName)s : %(lineno)s : %(levelname)s : %(message)s')
 fileMaxByte = 256 * 1024 * 200  # 100MB
 fileHandler = logging.handlers.RotatingFileHandler(
-            'logs/image_similarity.log', maxBytes=fileMaxByte, backupCount=10)
+            '{}/image_similarity.log'.format(os.environ.get('LOG_DIR', 'logs')), maxBytes=fileMaxByte, backupCount=10)
 fileHandler.setFormatter(fomatter)
 logger.addHandler(fileHandler)
 logger.setLevel(logging.INFO)

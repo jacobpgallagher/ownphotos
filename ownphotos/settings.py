@@ -285,9 +285,9 @@ STATICFILES_FINDERS = (
 
 STATIC_URL = '/django_static/'
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'protected_media')
+MEDIA_ROOT = os.environ.get('MEDIA_ROOT', os.path.join(BASE_DIR, 'protected_media'))
 # MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_ROOT = os.environ.get('STATIC_ROOT', os.path.join(BASE_DIR, 'static'))
 
 THUMBNAIL_SIZE_TINY = (30, 30)
 THUMBNAIL_SIZE_SMALL = (100, 100)
@@ -296,6 +296,9 @@ THUMBNAIL_SIZE = (500, 500)
 THUMBNAIL_SIZE_BIG = (2048, 2048)
 
 FULLPHOTO_SIZE = (1000, 1000)
+
+IM2TXT_DATA = os.environ.get('IM2TXT_DATA', 'api/im2txt')
+PLACES365_DATA = os.environ.get('PLACES365_DATA')
 
 CORS_ORIGIN_ALLOW_ALL = False
 CORS_ALLOW_CREDENTIALS = True

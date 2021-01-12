@@ -15,10 +15,14 @@ from PIL import Image
 from tqdm import tqdm
 import warnings
 import wideresnet
+from django.config import settings
 
 torch.nn.Module.dump_patches = True
 
-dir_places365_model = os.path.join(os.path.dirname(__file__),'model')
+if settings.PLACES365_DATA:
+    dir_places365_model = os.path.join(settings.PLACES365_DATA, 'model')
+else:
+    dir_places365_model = os.path.join(os.path.dirname(__file__),'model')
 
 def load_labels():
     # prepare all the labels
@@ -107,7 +111,7 @@ def inference_places365(img_path):
     weight_softmax = params[-2].data.numpy()
     weight_softmax[weight_softmax<0] = 0
 
-    
+
     # load the test image
     # img_url = 'http://places2.csail.mit.edu/imgs/12.jpg'
     # os.system('wget %s -q -O test.jpg' % img_url)
@@ -141,5 +145,3 @@ def inference_places365(img_path):
     res['attributes'] = [ remove_nonspace_separators(labels_attribute[idx_a[i]]) for i in range(-1,-10,-1)]
 
     return res
-
-
